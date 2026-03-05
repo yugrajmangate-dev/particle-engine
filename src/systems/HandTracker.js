@@ -5,7 +5,8 @@
  * @module HandTracker
  */
 
-import { Hands } from '@mediapipe/hands';
+// Hands is loaded as a global via CDN <script> tag in index.html
+/* global Hands */
 
 /** @typedef {{ present: boolean, x: number, y: number, gesture: string }} HandData */
 

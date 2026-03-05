@@ -5,7 +5,8 @@
  * @module FaceTracker
  */
 
-import { FaceMesh } from '@mediapipe/face_mesh';
+// FaceMesh is loaded as a global via CDN <script> tag in index.html
+/* global FaceMesh */
 
 export class FaceTracker {
   constructor() {
