@@ -25,6 +25,24 @@
 </head>
 <body>
 
+  <!-- ═══════════ Camera Permission Screen ═══════════ -->
+  <div id="camera-permission" class="cam-permission-overlay" role="dialog" aria-label="Camera permission required">
+    <div class="cam-permission-box">
+      <div class="cam-icon">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M23 7l-7 5 7 5V7z"/>
+          <rect x="1" y="5" width="15" height="14" rx="2" ry="2"/>
+        </svg>
+      </div>
+      <h2>Enable Camera for AI Tracking</h2>
+      <p>This experience uses your camera to track your <strong>hand gestures</strong> and <strong>facial expressions</strong> to control the particles in real time.</p>
+      <p class="cam-note">Your camera is processed locally &mdash; no data is sent anywhere.</p>
+      <button id="cam-allow-btn" class="cam-btn cam-btn-primary">Enable Camera</button>
+      <button id="cam-skip-btn" class="cam-btn cam-btn-secondary">Skip &mdash; Use Mouse Instead</button>
+      <p id="cam-error-msg" class="cam-error hidden"></p>
+    </div>
+  </div>
+
   <!-- ═══════════ Loading Screen ═══════════ -->
   <div id="loading-screen" role="status" aria-label="Loading application">
     <div class="loader-content">
@@ -80,6 +98,8 @@
         <span class="hint-key">H</span> Toggle HUD
         <span class="hint-sep">|</span>
         <span class="hint-key">1-7</span> Shapes
+        <span class="hint-sep">|</span>
+        <span class="hint-key" id="retry-cam-btn" style="cursor:pointer;pointer-events:all" title="Switch to Camera AI mode">C</span> Retry Camera
       </div>
       <div class="fps-counter" id="fps-display">0 FPS</div>
     </footer>

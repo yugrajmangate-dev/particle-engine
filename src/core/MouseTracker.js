@@ -13,7 +13,7 @@ export class MouseTracker {
     /** @type {{ left: HandData, right: HandData }} */
     this.data = {
       left:  { present: false, x: 0, y: 0, gesture: 'NONE' },
-      right: { present: true,  x: 0, y: 0, gesture: 'OPEN' },
+      right: { present: false, x: 0, y: 0, gesture: 'NONE' },
     };
 
     this._shapeIndex = 0;

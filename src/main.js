@@ -27,6 +27,21 @@ function hideLoadingScreen() {
   }
 }
 
+function showCamPermission() {
+  const overlay = $('#camera-permission');
+  if (overlay) overlay.classList.remove('hidden');
+}
+
+function hideCamPermission() {
+  const overlay = $('#camera-permission');
+  if (overlay) overlay.classList.add('hidden');
+}
+
+function showCamError(msg) {
+  const el = $('#cam-error-msg');
+  if (el) { el.textContent = msg; el.classList.remove('hidden'); }
+}
+
 /* ── Keyboard controls ── */
 
 function initKeyboardControls() {
@@ -78,6 +93,27 @@ function initFPSCounter() {
 
 /* ── Bootstrap ── */
 
+let worldInstance = null;
+
+async function startWithCamera(world) {
+  try {
+    await world.start((message, progress) => setLoadingState(message, progress));
+    return true;
+  } catch (err) {
+    const msg = err?.message || String(err);
+    if (msg.includes('Permission') || msg.includes('denied') || msg.includes('NotAllowed')) {
+      showCamError('Camera access was denied. Please allow camera in your browser settings, then click \"Enable Camera\" again.');
+    } else if (msg.includes('NotFound') || msg.includes('Devices')) {
+      showCamError('No camera found on this device. Using mouse mode instead.');
+      world.startMouseMode();
+    } else {
+      showCamError(`Camera error: ${msg}. Falling back to mouse mode.`);
+      world.startMouseMode();
+    }
+    return false;
+  }
+}
+
 async function main() {
   setLoadingState('Initializing renderer...', 10);
 
@@ -85,18 +121,49 @@ async function main() {
   if (!container) throw new Error('Scene container not found');
 
   const world = new World(container);
+  worldInstance = world;
 
   setLoadingState('Starting particle system...', 30);
 
-  try {
-    await world.start((message, progress) => setLoadingState(message, progress));
-  } catch (err) {
-    console.warn('Camera init failed — falling back to mouse mode:', err.message || err);
-    world.startMouseMode();
-  }
+  // Show camera permission screen first
+  showCamPermission();
 
-  setLoadingState('Ready!', 100);
-  setTimeout(hideLoadingScreen, 500);
+  // "Enable Camera" button
+  $('#cam-allow-btn')?.addEventListener('click', async () => {
+    const errEl = $('#cam-error-msg');
+    if (errEl) errEl.classList.add('hidden');
+    $('#cam-allow-btn').textContent = 'Connecting...';
+    $('#cam-allow-btn').disabled = true;
+
+    const ok = await startWithCamera(world);
+    if (ok) {
+      hideCamPermission();
+      setLoadingState('Ready!', 100);
+      setTimeout(hideLoadingScreen, 500);
+    } else {
+      $('#cam-allow-btn').textContent = 'Try Again';
+      $('#cam-allow-btn').disabled = false;
+    }
+  });
+
+  // "Use Mouse" button
+  $('#cam-skip-btn')?.addEventListener('click', () => {
+    hideCamPermission();
+    world.startMouseMode();
+    setLoadingState('Ready!', 100);
+    setTimeout(hideLoadingScreen, 500);
+  });
+
+  // "Retry Camera" button in HUD
+  $('#retry-cam-btn')?.addEventListener('click', async () => {
+    if (!world.useCamera) {
+      showCamPermission();
+      $('#cam-allow-btn').textContent = 'Enable Camera';
+      $('#cam-allow-btn').disabled = false;
+      const errEl = $('#cam-error-msg');
+      if (errEl) errEl.classList.add('hidden');
+    }
+  });
 
   initKeyboardControls();
   initFPSCounter();
