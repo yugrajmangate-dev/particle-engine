@@ -28,12 +28,12 @@ const vertexShader = /* glsl */ `
     vec4 mvPos = modelViewMatrix * vec4(position, 1.0);
     gl_Position = projectionMatrix * mvPos;
 
-    // Per-particle animated size with subtle twinkle
+    // Crisp per-particle size with very subtle variation
     float size = uSize * aScale * uPixelRatio;
-    size *= (1.0 + 0.15 * sin(uTime * 2.0 + aRandom * 6.283));
+    size *= (1.0 + 0.05 * sin(uTime * 1.5 + aRandom * 6.283));
 
     gl_PointSize = size * (250.0 / -mvPos.z);
-    gl_PointSize = max(gl_PointSize, 1.0);
+    gl_PointSize = max(gl_PointSize, 0.5);
   }
 `;
 
@@ -41,14 +41,14 @@ const fragmentShader = /* glsl */ `
   varying vec3 vColor;
 
   void main() {
-    // Soft circular particle with glow
+    // Sharp crisp circular particle — no glow
     float dist = length(gl_PointCoord - vec2(0.5));
     if (dist > 0.5) discard;
 
-    float alpha = 1.0 - smoothstep(0.0, 0.5, dist);
-    float glow  = exp(-dist * 6.0) * 0.6;
+    // Hard edge with slight anti-aliasing at boundary only
+    float alpha = 1.0 - smoothstep(0.4, 0.5, dist);
 
-    gl_FragColor = vec4(vColor + vColor * glow, alpha * 0.85);
+    gl_FragColor = vec4(vColor, alpha);
   }
 `;
 
@@ -88,7 +88,7 @@ export class ParticleSystem {
       this.colors[i * 3 + 1] = 1.0;
       this.colors[i * 3 + 2] = 1.0;
 
-      this.scales[i]  = 0.5 + Math.random();
+      this.scales[i]  = 0.7 + Math.random() * 0.6;
       this.randoms[i] = Math.random();
     }
 
@@ -103,7 +103,7 @@ export class ParticleSystem {
       fragmentShader,
       uniforms: {
         uTime:       { value: 0 },
-        uSize:       { value: Config.particles.size * 10 },
+        uSize:       { value: Config.particles.size * 5 },
         uPixelRatio: { value: Math.min(window.devicePixelRatio, 2) },
       },
       transparent: true,

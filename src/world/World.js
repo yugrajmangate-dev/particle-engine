@@ -161,18 +161,23 @@ export class World {
     this.faceTracker.init(this.videoElement);
 
     onProgress?.('Starting camera…', 75);
-    const { Camera } = await import('@mediapipe/camera_utils');
 
-    const cam = new Camera(this.videoElement, {
-      onFrame: async () => {
+    // Inline camera setup — avoids @mediapipe/camera_utils bundling issues on live URLs
+    const stream = await navigator.mediaDevices.getUserMedia({
+      video: { width: 640, height: 480 },
+    });
+    this.videoElement.srcObject = stream;
+    await this.videoElement.play();
+
+    // Continuous frame loop for MediaPipe processing
+    const processFrame = async () => {
+      if (this.videoElement.readyState >= 2) {
         await this.handTracker.send(this.videoElement);
         await this.faceTracker.send(this.videoElement);
-      },
-      width: 640,
-      height: 480,
-    });
-
-    await cam.start(); // throws on permission denied / no camera
+      }
+      requestAnimationFrame(processFrame);
+    };
+    requestAnimationFrame(processFrame);
 
     this._updateInputBadge('CAMERA AI', true);
     onProgress?.('System ready!', 95);

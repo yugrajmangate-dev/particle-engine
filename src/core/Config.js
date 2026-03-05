@@ -6,8 +6,8 @@
  */
 export const Config = {
   particles: {
-    count: 12000,
-    size: 0.15,
+    count: 22000,
+    size: 0.10,
     morphSpeed: 0.05,
     colorLerpSpeed: 0.08,
   },
@@ -25,9 +25,9 @@ export const Config = {
   },
 
   bloom: {
-    strength: 1.5,
-    radius: 0.4,
-    threshold: 0.2,
+    strength: 0.0,
+    radius: 0.0,
+    threshold: 1.0,
   },
 
   camera: {
