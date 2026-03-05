@@ -141,33 +141,38 @@ export class World {
    *
    * @param {(msg: string, pct: number) => void} [onProgress]
    */
-  async start(onProgress) {
-    onProgress?.('Initializing AI models…', 40);
+  /**
+   * Start with camera-based AI tracking.
+   * Accepts a MediaStream already obtained by the caller
+   * so the browser permission prompt fires BEFORE any CDN loading.
+   *
+   * @param {MediaStream} stream
+   * @param {(msg: string, pct: number) => void} [onProgress]
+   */
+  async start(stream, onProgress) {
+    onProgress?.('Starting camera feed…', 45);
 
     this.handTracker = new HandTracker();
     this.faceTracker = new FaceTracker();
     this.useCamera   = true;
 
-    // Hidden video element shared by both trackers
+    // Attach the already-granted stream to a hidden video element
     this.videoElement = document.createElement('video');
     this.videoElement.setAttribute('playsinline', '');
+    this.videoElement.setAttribute('muted', '');
+    this.videoElement.muted = true;
     this.videoElement.style.display = 'none';
     document.body.appendChild(this.videoElement);
-
-    onProgress?.('Loading hand tracker…', 50);
-    this.handTracker.init();
-
-    onProgress?.('Loading face tracker…', 60);
-    this.faceTracker.init(this.videoElement);
-
-    onProgress?.('Starting camera…', 75);
-
-    // Inline camera setup — avoids @mediapipe/camera_utils bundling issues on live URLs
-    const stream = await navigator.mediaDevices.getUserMedia({
-      video: { width: 640, height: 480 },
-    });
     this.videoElement.srcObject = stream;
     await this.videoElement.play();
+
+    onProgress?.('Loading hand tracker…', 60);
+    this.handTracker.init();
+
+    onProgress?.('Loading face tracker…', 75);
+    this.faceTracker.init(this.videoElement);
+
+    onProgress?.('Starting AI processing…', 88);
 
     // Continuous frame loop for MediaPipe processing
     const processFrame = async () => {

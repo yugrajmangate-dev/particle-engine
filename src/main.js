@@ -95,25 +95,6 @@ function initFPSCounter() {
 
 let worldInstance = null;
 
-async function startWithCamera(world) {
-  try {
-    await world.start((message, progress) => setLoadingState(message, progress));
-    return true;
-  } catch (err) {
-    const msg = err?.message || String(err);
-    if (msg.includes('Permission') || msg.includes('denied') || msg.includes('NotAllowed')) {
-      showCamError('Camera access was denied. Please allow camera in your browser settings, then click \"Enable Camera\" again.');
-    } else if (msg.includes('NotFound') || msg.includes('Devices')) {
-      showCamError('No camera found on this device. Using mouse mode instead.');
-      world.startMouseMode();
-    } else {
-      showCamError(`Camera error: ${msg}. Falling back to mouse mode.`);
-      world.startMouseMode();
-    }
-    return false;
-  }
-}
-
 async function main() {
   setLoadingState('Initializing renderer...', 10);
 
@@ -123,24 +104,57 @@ async function main() {
   const world = new World(container);
   worldInstance = world;
 
-  setLoadingState('Starting particle system...', 30);
+  setLoadingState('Ready to start...', 30);
 
   // Show camera permission screen first
   showCamPermission();
 
-  // "Enable Camera" button
+  // "Enable Camera" button — getUserMedia fires HERE, inside the click handler,
+  // so the browser permission prompt appears immediately before any CDN loading.
   $('#cam-allow-btn')?.addEventListener('click', async () => {
     const errEl = $('#cam-error-msg');
     if (errEl) errEl.classList.add('hidden');
-    $('#cam-allow-btn').textContent = 'Connecting...';
+    $('#cam-allow-btn').textContent = 'Requesting camera…';
     $('#cam-allow-btn').disabled = true;
 
-    const ok = await startWithCamera(world);
-    if (ok) {
+    let stream;
+    try {
+      // This call is inside a user gesture — browser WILL show the permission popup
+      stream = await navigator.mediaDevices.getUserMedia({
+        video: {
+          width:      { ideal: 640 },
+          height:     { ideal: 480 },
+          facingMode: 'user',   // front camera on mobile
+        },
+        audio: false,
+      });
+    } catch (err) {
+      const name = err?.name || '';
+      const msg  = err?.message || String(err);
+      if (name === 'NotAllowedError' || msg.includes('denied') || msg.includes('Permission')) {
+        showCamError('Camera permission denied.\nTap the camera/lock icon in your browser address bar → allow camera → tap "Try Again".');
+      } else if (name === 'NotFoundError' || msg.includes('NotFound')) {
+        showCamError('No camera found on this device. Use "Skip — Use Mouse Instead" below.');
+      } else {
+        showCamError('Camera error: ' + msg);
+      }
+      $('#cam-allow-btn').textContent = 'Try Again';
+      $('#cam-allow-btn').disabled = false;
+      return;
+    }
+
+    // Camera granted — now load AI models and start
+    try {
       hideCamPermission();
+      setLoadingState('Starting AI models…', 40);
+
+      await world.start(stream, (message, progress) => setLoadingState(message, progress));
+
       setLoadingState('Ready!', 100);
       setTimeout(hideLoadingScreen, 500);
-    } else {
+    } catch (err) {
+      showCamPermission();
+      showCamError('AI model failed to load: ' + (err?.message || err) + '\nPlease refresh and try again.');
       $('#cam-allow-btn').textContent = 'Try Again';
       $('#cam-allow-btn').disabled = false;
     }
@@ -155,7 +169,7 @@ async function main() {
   });
 
   // "Retry Camera" button in HUD
-  $('#retry-cam-btn')?.addEventListener('click', async () => {
+  $('#retry-cam-btn')?.addEventListener('click', () => {
     if (!world.useCamera) {
       showCamPermission();
       $('#cam-allow-btn').textContent = 'Enable Camera';
