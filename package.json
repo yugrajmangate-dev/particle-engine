@@ -1,0 +1,27 @@
+{
+  "name": "particle-engine",
+  "version": "2.0.0",
+  "description": "Interactive 3D particle system with AI-powered hand and face tracking",
+  "author": "Yugraj Mangate",
+  "license": "MIT",
+  "homepage": "https://yugrajmangate-dev.github.io/particle-engine/",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/yugrajmangate-dev/particle-engine"
+  },
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@mediapipe/camera_utils": "^0.3.16",
+    "@mediapipe/drawing_utils": "^0.3.16",
+    "@mediapipe/face_mesh": "^0.4.1633559619",
+    "@mediapipe/hands": "^0.4.16",
+    "three": "^0.160.0"
+  },
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
