@@ -124,5 +124,3 @@ To enable: Go to **Settings → Pages → Source → GitHub Actions** in your re
 MIT — see [LICENSE](LICENSE) for details.
 
 ---
-
-Built by [Yugraj Mangate](https://github.com/yugrajmangate-dev)
